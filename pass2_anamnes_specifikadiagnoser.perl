@@ -1,6 +1,10 @@
 # kör med *lopnr-sorterad* pass1-output som input!
 #==============================================================================================================================
 #
+# 5.0
+# fixar fler liknande specialer
+#
+#
 # 4.0
 # fixar special för F32-4 och F33-34
 #
@@ -26,6 +30,9 @@
 # d) alla diagnoser öht
 #
 #==============================================================================================================================
+foreach $dd (F32, F33, F34, F41, F43, M16, M17, M54, M60) {
+    $diagnosisofinterest{$dd}++;
+}
 use DateTime;
 use DateTime::Format::Strptime;
 my $debug = 0;
@@ -56,21 +63,22 @@ print "F_nbrutto_1y".$separator."F_deltid_1y".$separator;# F_summa_utbetalt_1y".
 print "F_nbrutto_2y".$separator."F_deltid_2y".$separator;# F_summa_utbetalt_2y".$separator;
 print "F_nbrutto_5y".$separator."F_deltid_5y".$separator;# F_summa_utbetalt_5y".$separator;
 print "F_nbrutto_hittills".$separator."F_deltid_hittills".$separator;# F_summa_utbetalt_hittills".$separator;
-# 30-37
-print "F_nbrutto_1y".$separator."F_deltid_1y".$separator;# F_summa_utbetalt_1y".$separator;
-print "F_nbrutto_2y".$separator."F_deltid_2y".$separator;# F_summa_utbetalt_2y".$separator;
-print "F_nbrutto_5y".$separator."F_deltid_5y".$separator;# F_summa_utbetalt_5y".$separator;
-print "F_nbrutto_hittills".$separator."F_deltid_hittills".$separator;# F_summa_utbetalt_hittills".$separator;
-# 38-45
-print "F_nbrutto_1y".$separator."F_deltid_1y".$separator;# F_summa_utbetalt_1y".$separator;
-print "F_nbrutto_2y".$separator."F_deltid_2y".$separator;# F_summa_utbetalt_2y".$separator;
-print "F_nbrutto_5y".$separator."F_deltid_5y".$separator;# F_summa_utbetalt_5y".$separator;
-print "F_nbrutto_hittills".$separator."F_deltid_hittills".$separator;# F_summa_utbetalt_hittills".$separator;
-# 45-52
+
+
 print "M_nbrutto_1y".$separator."M_deltid_1y".$separator;# M_summa_utbetalt_1y".$separator;
 print "M_nbrutto_2y".$separator."M_deltid_2y".$separator;# M_summa_utbetalt_2y".$separator;
 print "M_nbrutto_5y".$separator."M_deltid_5y".$separator;# M_summa_utbetalt_5y".$separator;
 print "M_nbrutto_hittills".$separator."M_deltid_hittills".$separator;# M_summa_utbetalt_hittills".$separator;
+
+for $dd (sort keys %diagnosisofinterest) {
+
+print $dd."_nbrutto_1y".$separator.$dd."_deltid_1y".$separator;# F_summa_utbetalt_1y".$separator;
+print $dd."_nbrutto_2y".$separator.$dd."_deltid_2y".$separator;# F_summa_utbetalt_2y".$separator;
+print $dd."_nbrutto_5y".$separator.$dd."_deltid_5y".$separator;# F_summa_utbetalt_5y".$separator;
+print $dd."_nbrutto_hittills".$separator.$dd."_deltid_hittills".$separator;# F_summa_utbetalt_hittills".$separator;
+
+}
+
 ## # 53-54
 print "LIU_SYSSELSATTNING".$separator."DIAGNOS_KOD".$separator;
 # 55 - 64
@@ -136,7 +144,11 @@ while (<>) {
 #==============================================================================================================================
 # INIT
     for $per ("1y","2y","5y","hela") {
-	for $kat ("alla","samma","F","F324","F334","M") {
+	for $kat ("alla","samma","F","M") {
+	    $nvektor{$per}{$kat}{"brutto"} = 0;
+	    $nvektor{$per}{$kat}{"deltid"} = "none";
+	}
+	for $kat (sort keys %diagnosisofinterest) {
 	    $nvektor{$per}{$kat}{"brutto"} = 0;
 	    $nvektor{$per}{$kat}{"deltid"} = "none";
 	}
@@ -195,11 +207,8 @@ while (<>) {
 		if ($anamnes{$lopnr}{$start}[5] =~ /^F/) {
 		    $nvektor{$per}{"F"}{$var} = "yes" if $anamnes{$lopnr}{$start}[3] eq "yes";
 		}
-		if ($anamnes{$lopnr}{$start}[5] =~ /^F3[2-4]/) {
-		    $nvektor{$per}{"F324"}{$var} = "yes" if $anamnes{$lopnr}{$start}[3] eq "yes";
-		}
-		if ($anamnes{$lopnr}{$start}[5] =~ /^F3[3-4]/) {
-		    $nvektor{$per}{"F334"}{$var} = "yes" if $anamnes{$lopnr}{$start}[3] eq "yes";
+		if ($diagnosisofinterest{$anamnes{$lopnr}{$start}[5]}) {
+		    $nvektor{$per}{$anamnes{$lopnr}{$start}[5]}{$var} = "yes" if $anamnes{$lopnr}{$start}[3] eq "yes";
 		}
 		if ($anamnes{$lopnr}{$start}[5] =~ /^M/) {
 		    $nvektor{$per}{"M"}{$var} = "yes" if $anamnes{$lopnr}{$start}[3] eq "yes";
@@ -218,11 +227,8 @@ while (<>) {
 		if ($anamnes{$lopnr}{$start}[5] =~ /^F/) {
 		    $nvektor{$per}{"F"}{$var}	+=  $adder;
 		}
-		if ($anamnes{$lopnr}{$start}[5] =~ /^F3[2-4]/) {
-		    $nvektor{$per}{"F324"}{$var}	+=  $adder;
-		}
-		if ($anamnes{$lopnr}{$start}[5] =~ /^F3[3-4]/) {
-		    $nvektor{$per}{"F334"}{$var}	+=  $adder;
+		if ($diagnosisofinterest{$anamnes{$lopnr}{$start}[5]}) {
+		    $nvektor{$per}{$anamnes{$lopnr}{$start}[5]}{$var}	+=  $adder;
 		}
 		if ($anamnes{$lopnr}{$start}[5] =~ /^M/) {
 		    $nvektor{$per}{"M"}{$var}	+=   $adder;
@@ -237,7 +243,15 @@ while (<>) {
     print "$sjukskrivningsfall[3]".$separator;
     print "$sjukskrivningsfall[4]".$separator;
     print "$sjukskrivningsfall[5]".$separator;
-    for $kat ("alla","samma","F","F324","F334","M") {
+    for $kat ("alla","samma","F","M") {
+	for $per ("1y","2y","5y","hela") {
+	    print $kat."_".$per."_" if $debug;
+	    print $nvektor{$per}{$kat}{"brutto"}.$separator;
+	    if ($nvektor{$per}{$kat}{"brutto"} > 0 && $nvektor{$per}{$kat}{"deltid"} eq "none") {$nvektor{$per}{$kat}{"deltid"} = "full";}
+	    print $nvektor{$per}{$kat}{"deltid"}.$separator;
+	}
+    }
+    for $kat (sort keys %diagnosisofinterest) {
 	for $per ("1y","2y","5y","hela") {
 	    print $kat."_".$per."_" if $debug;
 	    print $nvektor{$per}{$kat}{"brutto"}.$separator;
